@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกและจัดการส่งของ (Cute V3)</title>
+    <title>ระบบบันทึกและจัดการส่งของ (Cute V3.1)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,8 +37,8 @@
 
     <div class="max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-pink-500 drop-shadow-sm mb-2">✨ สมุดบันทึกน้องหมีจัดส่งของ V3 ✨</h1>
-            <p class="text-sm text-amber-600/80 font-medium">เพิ่มรูปได้จุใจ แทร็กตามชื่อไลน์หลักได้อย่างแม่นยำ 🧸🍰</p>
+            <h1 class="text-4xl font-bold text-pink-500 drop-shadow-sm mb-2">✨ ระบบจัดส่งของร้าน chibi ✨</h1>
+            <p class="text-sm text-amber-600/80 font-medium">เพิ่มระบบแจ้งเตือน "ฝากครบกำหนดแล้ว" ในตารางส่งของอัตโนมัติ 🧸🍰</p>
         </div>
 
         <div class="bg-gradient-to-r from-pink-100 to-amber-100 p-5 rounded-2xl border-2 border-pink-200/60 shadow-sm mb-6">
@@ -74,7 +74,7 @@
                 </div>
                 
                 <div class="md:col-span-3 bg-amber-50/20 p-4 rounded-2xl border border-dashed border-amber-300">
-                    <label class="block text-sm font-semibold text-amber-800 mb-2">📸 แนบรูปภาพออเดอร์/สลิป (เลือกได้หลายรูปพร้อมกันน้า)</label>
+                    <label class="block text-sm font-semibold text-amber-800 mb-2">📸 แนบรูปภาพออเดอร์/สลิป</label>
                     <input type="file" id="itemImages" accept="image/*" multiple class="w-full p-2 bg-white rounded-xl cursor-pointer text-sm file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
                     <div id="imagesPreviewContainer" class="mt-3 flex flex-wrap gap-2">
                         </div>
@@ -127,7 +127,7 @@
                                 <th class="p-4">เบอร์โทร</th>
                                 <th class="p-4">ที่อยู่</th>
                                 <th class="p-4 text-center">เช็กของ</th>
-                                <th class="p-4 text-center">หมายเหตุ</th>
+                                <th class="p-4 text-center">ประเภทการส่ง</th>
                                 <th class="p-4 text-right">จัดการ</th>
                             </tr>
                         </thead>
@@ -151,7 +151,7 @@
                                 <th class="p-4">เบอร์โทร</th>
                                 <th class="p-4">ที่อยู่</th>
                                 <th class="p-4 text-center">เช็กของ</th>
-                                <th class="p-4 text-center">ฝากไว้แล้ว</th>
+                                <th class="p-4 text-center">ระยะเวลาฝาก</th>
                                 <th class="p-4 text-right">จัดการ</th>
                             </tr>
                         </thead>
@@ -199,7 +199,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let compressedImagesArray = []; // อาเรย์สำหรับเก็บรูปภาพหลายรูป (Base64)
+        let compressedImagesArray = []; 
         let currentCopyText = ""; 
 
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
@@ -255,14 +255,14 @@
             alert('🪄 แยกช่องให้เรียบร้อยแล้วจ้า!');
         }
 
-        // --- 3. ระบบบีบอัดรูปภาพแบบอัปโหลดได้หลายภาพพร้อมกัน (Multi-Compression) ---
+        // --- 3. ระบบบีบอัดรูปภาพ ---
         document.getElementById('itemImages').addEventListener('change', function(e) {
             const files = e.target.files;
             if (!files.length) return;
 
             const previewContainer = document.getElementById('imagesPreviewContainer');
-            previewContainer.innerHTML = ''; // ล้างรูปพรีวิวเก่าก่อนโหลดเซ็ตใหม่
-            compressedImagesArray = []; // ล้างข้อมูลเก่า
+            previewContainer.innerHTML = ''; 
+            compressedImagesArray = []; 
 
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
@@ -296,7 +296,6 @@
                         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
                         compressedImagesArray.push(compressedBase64);
                         
-                        // สร้างแท็กแสดงรูปพรีวิวขนาดเล็กในฟอร์ม
                         const imgWrapper = document.createElement('img');
                         imgWrapper.src = compressedBase64;
                         imgWrapper.className = "h-16 w-16 object-cover rounded-xl border-2 border-amber-200 shadow-xs";
@@ -343,9 +342,8 @@
                 address: address,
                 isComplete: isComplete,
                 status: status,
-                imagesList: compressedImagesArray // ส่งอาเรย์รูปภาพทั้งหมดขึ้น Firebase
+                imagesList: compressedImagesArray 
             }).then(() => {
-                // ล้างค่าฟอร์ม
                 document.getElementById('customerLine').value = '';
                 document.getElementById('customerName').value = '';
                 document.getElementById('customerPhone').value = '';
@@ -382,7 +380,6 @@
                         const row = document.createElement('tr');
                         row.className = "hover:bg-amber-50/40 transition border-b border-gray-100";
                         
-                        // ส่วนแสดงรูปภาพ (รวมรูปหลายรูปให้อยู่ในช่องเดียว กดคลิกเพื่อขยายดูรูปใหญ่ได้)
                         let imagesHTML = '<div class="flex gap-1 max-w-[120px] overflow-x-auto py-1">';
                         if (data.imagesList && data.imagesList.length > 0) {
                             data.imagesList.forEach(imgBase64 => {
@@ -418,7 +415,11 @@
                         `;
 
                         if (currentStatus === 'ส่งเลย') {
-                            const note = isAutoMoved ? '<span class="text-rose-600 text-xs font-bold bg-rose-100 px-2 py-1 rounded-lg">⏰ ฝากครบ 2 สัปดาห์แล้ว!</span>' : '<span class="text-gray-400 text-xs">-</span>';
+                            // ปรับแต่งการแจ้งเตือนประเภทการส่งให้ชัดเจนตามบรีฟใหม่
+                            const note = isAutoMoved 
+                                ? `<span class="text-rose-700 text-xs font-bold bg-rose-100 px-2.5 py-1 rounded-full shadow-xs border border-rose-200 block text-center">🚨 ฝากครบ 14 วันแล้ว (ย้ายอัตโนมัติ)</span>` 
+                                : `<span class="text-emerald-700 text-xs font-bold bg-emerald-100 px-2.5 py-1 rounded-full block text-center">🚀 ส่งทันที</span>`;
+                                
                             row.innerHTML = `
                                 <td class="p-4">${imagesHTML}</td>
                                 <td class="p-4 font-semibold text-pink-600 whitespace-nowrap">🟢 ${cleanLine}</td>
@@ -426,7 +427,7 @@
                                 <td class="p-4 text-gray-700 font-medium">${cleanPhone}</td>
                                 <td class="p-4 text-gray-600 max-w-xs truncate">${data.address}</td>
                                 <td class="p-4 text-center">${checkIcon}</td>
-                                <td class="p-4 text-center">${note}</td>
+                                <td class="p-4">${note}</td>
                                 <td class="p-4 text-right whitespace-nowrap space-x-1">
                                     ${actionButtons}
                                     ${deleteBtn}
@@ -441,7 +442,7 @@
                                 <td class="p-4 text-gray-700 font-medium">${cleanPhone}</td>
                                 <td class="p-4 text-gray-600 max-w-xs truncate">${data.address}</td>
                                 <td class="p-4 text-center">${checkIcon}</td>
-                                <td class="p-4 text-center font-bold text-purple-600 bg-purple-50 rounded-xl">${daysCount} วัน</td>
+                                <td class="p-4 text-center font-bold text-purple-600 bg-purple-50 rounded-xl px-2 py-1">${daysCount} วัน</td>
                                 <td class="p-4 text-right whitespace-nowrap space-x-1">
                                     ${actionButtons}
                                     ${deleteBtn}
