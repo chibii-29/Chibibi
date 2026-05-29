@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกและจัดการส่งของ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    
+    <style>
+        /* สไตล์สำหรับการปริ้นต์ที่อยู่ใบปะหน้า */
+        @media print {
+            body * { display: none !important; }
+            #print-section, #print-section * { display: block !important; }
+            #print-section {
+                position: absolute;
+                left: 0; top: 0; width: 100%;
+                padding: 20px; border: 2px dashed #000;
+                font-size: 20px; line-height: 1.5;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">📦 ระบบจัดการออเดอร์และฝากของ</h1>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">📝 เพิ่มข้อมูลลูกค้าใหม่</h2>
+            <form id="orderForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อลูกค้า</label>
+                    <input type="text" id="customerName" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">วันที่บันทึก</label>
+                    <input type="date" id="recordDate" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-600 mb-1">ที่อยู่ลูกค้า</label>
+                    <textarea id="customerAddress" rows="3" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="บ้านเลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์..."></textarea>
+                </div>
+                
+                <div class="flex flex-wrap gap-6 md:col-span-2 my-2 bg-gray-50 p-3 rounded-lg">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="isItemsComplete" class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                        <span class="text-sm font-medium text-gray-700">✅ เช็กของครบแล้ว</span>
+                    </label>
+                    
+                    <div class="flex items-center space-x-4 border-l pl-6 border-gray-300">
+                        <span class="text-sm font-medium text-gray-600">การจัดการ:</span>
+                        <label class="flex items-center space-x-1.5 cursor-pointer">
+                            <input type="radio" name="shippingStatus" value="ส่งเลย" checked class="w-4 h-4 text-indigo-600">
+                            <span class="text-sm text-gray-700">🚀 ส่งเลย</span>
+                        </label>
+                        <label class="flex items-center space-x-1.5 cursor-pointer">
+                            <input type="radio" name="shippingStatus" value="ฝากของ" class="w-4 h-4 text-indigo-600">
+                            <span class="text-sm text-gray-700">📥 ฝากของ</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 text-right">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg transition shadow-sm cursor-pointer">💾 บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="flex justify-end items-center mb-4 bg-yellow-50 p-3 rounded-xl border border-yellow-200">
+            <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" id="editModeToggle" class="w-4 h-4 text-yellow-600 rounded focus:ring-yellow-500">
+                <span class="text-sm font-semibold text-yellow-800">🛠️ เปิดโหมดแก้ไข (เพื่อลบข้อมูล)</span>
+            </label>
+        </div>
+
+        <div class="space-y-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-emerald-50 px-6 py-4 border-b border-emerald-100">
+                    <h2 class="text-lg font-bold text-emerald-700 flex items-center gap-2">🚀 ตาราง: ส่งได้เลย (รวมของฝากที่ครบ 2 อาทิตย์แล้ว)</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold border-b border-gray-200">
+                                <th class="p-4">วันที่บันทึก</th>
+                                <th class="p-4">ชื่อลูกค้า</th>
+                                <th class="p-4">ที่อยู่</th>
+                                <th class="p-4 text-center">เช็กของ</th>
+                                <th class="p-4 text-center">หมายเหตุ</th>
+                                <th class="p-4 text-right">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="readyToShipTable" class="divide-y divide-gray-100 text-sm">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-blue-50 px-6 py-4 border-b border-blue-100">
+                    <h2 class="text-lg font-bold text-blue-700 flex items-center gap-2">📥 ตาราง: ฝากของ</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold border-b border-gray-200">
+                                <th class="p-4">วันที่บันทึก</th>
+                                <th class="p-4">ชื่อลูกค้า</th>
+                                <th class="p-4">ที่อยู่</th>
+                                <th class="p-4 text-center">เช็กของ</th>
+                                <th class="p-4 text-center">จำนวนวันที่ฝาก</th>
+                                <th class="p-4 text-right">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="onHoldTable" class="divide-y divide-gray-100 text-sm">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-section" class="hidden"></div>
+
+    <script>
+        // --- 1. ตั้งค่า Firebase ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgR40L4jIg5KcxQFxp4-wbaDhxo-PmWfs",
+            authDomain: "chibibi29.firebaseapp.com",
+            databaseURL: "https://chibibi29-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "chibibi29",
+            storageBucket: "chibibi29.firebasestorage.app",
+            messagingSenderId: "69596771030",
+            appId: "1:69596771030:web:17bfda3215bdbcb84f0f77",
+            measurementId: "G-P71P0F1W66"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ตั้งค่าวันที่ปัจจุบันให้ฟอร์มอัตโนมัติ เพื่อความสะดวก
+        document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
+
+        // --- 2. ฟังชันคำนวณจำนวนวันฝาก ---
+        function calculateDaysInput(recordDateStr) {
+            const recordDate = new Date(recordDateStr);
+            const today = new Date();
+            // รีเซ็ตเวลาให้เหลือแต่สถานะวันที่เพื่อความแม่นยำ
+            recordDate.setHours(0,0,0,0);
+            today.setHours(0,0,0,0);
+            
+            const differenceInTime = today.getTime() - recordDate.getTime();
+            const differenceInDays = Math.floor(differenceInTime / (1000 * 3600 * 24));
+            return differenceInDays >= 0 ? differenceInDays : 0;
+        }
+
+        // --- 3. บันทึกข้อมูลลง Firebase ---
+        document.getElementById('orderForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('customerName').value;
+            const date = document.getElementById('recordDate').value;
+            const address = document.getElementById('customerAddress').value;
+            const isComplete = document.getElementById('isItemsComplete').checked;
+            const status = document.querySelector('input[name="shippingStatus"]:checked').value;
+
+            const newOrderRef = db.ref('orders').push();
+            newOrderRef.set({
+                name: name,
+                date: date,
+                address: address,
+                isComplete: isComplete,
+                status: status
+            }).then(() => {
+                // เคลียร์ฟอร์มหลังบันทึกสำเร็จ
+                document.getElementById('customerName').value = '';
+                document.getElementById('customerAddress').value = '';
+                document.getElementById('isItemsComplete').checked = false;
+                document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
+                alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+            }).catch((error) => {
+                alert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+            });
+        });
+
+        // --- 4. ดึงข้อมูลจาก Firebase และแสดงผลแยกตาราง ---
+        db.ref('orders').on('value', (snapshot) => {
+            const readyTable = document.getElementById('readyToShipTable');
+            const holdTable = document.getElementById('onHoldTable');
+            
+            // ล้างข้อมูลเก่าในตารางก่อนโหลดใหม่
+            readyTable.innerHTML = '';
+            holdTable.innerHTML = '';
+
+            const isEditMode = document.getElementById('editModeToggle').checked;
+
+            if (snapshot.exists()) {
+                snapshot.forEach((childSnapshot) => {
+                    const id = childSnapshot.key;
+                    const data = childSnapshot.val();
+                    
+                    const daysCount = calculateDaysInput(data.date);
+                    
+                    // สร้างแถวข้อมูล (Row)
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-gray-50 transition";
+                    
+                    // ปรับแต่งสีและเครื่องหมายติ๊กถูก
+                    const checkIcon = data.isComplete ? '<span class="text-emerald-600 font-bold">✓ ครบแล้ว</span>' : '<span class="text-gray-400">ยังไม่ครบ</span>';
+                    
+                    // ปุ่มลบที่จะแสดงตามโหมดแก้ไข
+                    const deleteBtn = isEditMode 
+                        ? `<button onclick="deleteOrder('${id}')" class="bg-red-500 hover:bg-red-600 text-white text-xs px-2.5 py-1 rounded cursor-pointer transition ml-2">ลบ</button>` 
+                        : '';
+
+                    // เช็กเงื่อนไข: ถ้าเลือก 'ฝากของ' แต่ฝากมาครบ 14 วัน (2 อาทิตย์) แล้ว ให้ดีดเข้าตาราง 'ส่งเลย'
+                    let currentStatus = data.status;
+                    let isAutoMoved = false;
+                    if (data.status === 'ฝากของ' && daysCount >= 14) {
+                        currentStatus = 'ส่งเลย';
+                        isAutoMoved = true;
+                    }
+
+                    if (currentStatus === 'ส่งเลย') {
+                        // บรรจุลงตารางส่งได้เลย
+                        const note = isAutoMoved ? '<span class="text-red-500 text-xs font-semibold">⏰ ฝากครบ 2 อาทิตย์แล้ว</span>' : '<span class="text-gray-400 text-xs">-</span>';
+                        row.innerHTML = `
+                            <td class="p-4 text-gray-500 whitespace-nowrap">${data.date}</td>
+                            <td class="p-4 font-medium text-gray-900">${data.name}</td>
+                            <td class="p-4 text-gray-600 max-w-xs truncate md:max-w-none md:whitespace-normal">${data.address}</td>
+                            <td class="p-4 text-center">${checkIcon}</td>
+                            <td class="p-4 text-center">${note}</td>
+                            <td class="p-4 text-right whitespace-nowrap space-x-1">
+                                <button onclick="printAddress('${data.name}', '${data.address.replace(/\n/g, ' ')}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium px-3 py-1.5 rounded-lg transition cursor-pointer">🖨️ ปริ้นต์ที่อยู่</button>
+                                ${deleteBtn}
+                            </td>
+                        `;
+                        readyTable.appendChild(row);
+                    } else {
+                        // บรรจุลงตารางฝากของ
+                        row.innerHTML = `
+                            <td class="p-4 text-gray-500 whitespace-nowrap">${data.date}</td>
+                            <td class="p-4 font-medium text-gray-900">${data.name}</td>
+                            <td class="p-4 text-gray-600 max-w-xs truncate md:max-w-none md:whitespace-normal">${data.address}</td>
+                            <td class="p-4 text-center">${checkIcon}</td>
+                            <td class="p-4 text-center font-bold text-blue-600">${daysCount} วัน</td>
+                            <td class="p-4 text-right whitespace-nowrap space-x-1">
+                                <button onclick="printAddress('${data.name}', '${data.address.replace(/\n/g, ' ')}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-medium px-3 py-1.5 rounded-lg transition cursor-pointer">🖨️ ปริ้นต์ที่อยู่</button>
+                                ${deleteBtn}
+                            </td>
+                        `;
+                        holdTable.appendChild(row);
+                    }
+                });
+            } else {
+                // แสดงข้อความเมื่อไม่มีข้อมูล
+                readyTable.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400">ไม่มีข้อมูลรายการส่งของ</td></tr>`;
+                holdTable.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400">ไม่มีข้อมูลรายการฝากของ</td></tr>`;
+            }
+        });
+
+        // เปิด-ปิด โหมดแก้ไข จะรีเฟรชตารางแสดงปุ่มลบ
+        document.getElementById('editModeToggle').addEventListener('change', () => {
+            db.ref('orders').get().then((snapshot) => {
+                // บังคับให้ Firebase อัปเดต UI หน้าจอใหม่อีกรอบเพื่อแสดง/ซ่อนปุ่มลบ
+                db.ref('orders').trigger('value'); 
+            });
+        });
+
+        // --- 5. ฟังก์ชันลบข้อมูล ---
+        function deleteOrder(id) {
+            if (confirm('คุณแน่ใจใช่ไหมว่าจะลบข้อมูลของลูกค้ารายนี้?')) {
+                db.ref('orders/' + id).remove()
+                    .then(() => alert('ลบข้อมูลสำเร็จแล้ว'))
+                    .catch((err) => alert('เกิดข้อผิดพลาด: ' + err.message));
+            }
+        }
+
+        // --- 6. ฟังก์ชันปริ้นต์เฉพาะที่อยู่ ---
+        function printAddress(name, address) {
+            const printSection = document.getElementById('print-section');
+            printSection.innerHTML = `
+                <div>
+                    <strong>ผู้รับ:</strong> ${name} <br>
+                    <strong>ที่อยู่:</strong> ${address}
+                </div>
+            `;
+            window.print();
+        }
+    </script>
+</body>
+</html>
