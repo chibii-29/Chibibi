@@ -41,14 +41,6 @@
             <p class="text-sm text-amber-600/80 font-medium">ขอให้ลูกค้าใจดีกับแจง🫶🏻</p>
         </div>
 
-        <div class="bg-gradient-to-r from-pink-100 to-amber-100 p-5 rounded-2xl border-2 border-pink-200/60 shadow-sm mb-6">
-            <h2 class="text-md font-bold text-pink-700 mb-2 flex items-center gap-1">🪄 แยก : วางข้อความที่ก๊อบปี้มาตรงนี้เลย</h2>
-            <div class="space-y-3">
-                <textarea id="rawPasteInput" rows="2" class="w-full p-2.5 bg-white/90 border border-pink-300 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none text-sm placeholder-gray-400" placeholder="วางข้อมูลผู้รับ เช่น: แมว 333 ม.1 ต.ไก่ อ.เมือง จ.ทะเล 21000"></textarea>
-                <button type="button" onclick="parseCopiedText()" class="w-full md:w-auto bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold px-6 py-2 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">✨ แยกช่องข้อมูล</button>
-            </div>
-        </div>
-
         <div class="bg-gradient-to-r from-blue-100 to-indigo-100 p-5 rounded-2xl border-2 border-blue-200/60 shadow-sm mb-6">
             <h2 class="text-md font-bold text-blue-800 mb-2 flex items-center gap-1">🔮 โหมดจัดการเลขพัสดุให้ลูกค้า</h2>
             <div class="space-y-3 bg-white/80 p-4 rounded-xl border border-blue-200">
@@ -72,6 +64,14 @@
             
             <div id="trackingResultContainer" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 hidden">
                 </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-pink-100 to-amber-100 p-5 rounded-2xl border-2 border-pink-200/60 shadow-sm mb-6">
+            <h2 class="text-md font-bold text-pink-700 mb-2 flex items-center gap-1">🪄 แยก : วางข้อความที่ก๊อบปี้มาตรงนี้เลย</h2>
+            <div class="space-y-3">
+                <textarea id="rawPasteInput" rows="2" class="w-full p-2.5 bg-white/90 border border-pink-300 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none text-sm placeholder-gray-400" placeholder="วางข้อมูลผู้รับ เช่น: แมว 333 ม.1 ต.ไก่ อ.เมือง จ.ทะเล 21000"></textarea>
+                <button type="button" onclick="parseCopiedText()" class="w-full md:w-auto bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold px-6 py-2 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">✨ แยกช่องข้อมูล</button>
+            </div>
         </div>
 
         <div class="bg-white p-6 rounded-3xl shadow-md border-2 border-amber-100 mb-8">
@@ -229,11 +229,11 @@
 
         let compressedImagesArray = []; 
         let currentCopyText = ""; 
-        let currentEditId = null; // ตัวแปรเก็บ ID ออเดอร์ที่กำลังแก้ไข
+        let currentEditId = null; 
 
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
 
-        // --- ฟังก์ชันเสริมสำหรับโหมดเลขพัสดุ (เพิ่มใหม่ตามสั่ง) ---
+        // --- ฟังก์ชันสำหรับโหมดเลขพัสดุ ---
         function generateTrackingMessages() {
             const rawText = document.getElementById('rawTrackingInput').value.trim();
             const courier = document.querySelector('input[name="courierSelect"]:checked').value;
@@ -254,22 +254,18 @@
                 const trimmedLine = line.trim();
                 if (!trimmedLine) return;
 
-                // แยกเลขพัสดุกับชื่อออกจากกัน (ใช้ช่องว่างเป็นตัวแบ่ง)
                 const parts = trimmedLine.split(/\s+/);
                 if (parts.length < 2) return;
 
                 const trackingCode = parts[0];
                 let name = parts.slice(1).join(' ');
 
-                // เติมคำว่า คุณ หน้าชื่อ
                 if (!name.startsWith('คุณ')) {
                     name = 'คุณ' + name;
                 }
 
-                // ประกอบข้อความแจ้งเลขพัสดุแบบฟอร์มสวยๆ
                 const messageText = `💝 สวัสดีค่ามาแจ้งเลขพัสดุค่า \n\n"เพื่อความสบายใจของลูกค้าและรักษาสิทธิ์ของตัวเอง รบกวนถ่ายวิดีโอขณะแกะพัสดุไว้ด้วยนะคะ หากสินค้ามีปัญหาหรือได้รับไม่ครบ ทางร้านจะรีบดำเนินการตรวจสอบและดูแลให้ทันทีเมื่อมีหลักฐานวิดีโอค่ะ"\n\n${trackingCode}  “${name}”\n\nขนส่ง : ${courierLink}`;
 
-                // สร้างการแสดงผลกล่องข้อความรายคนเพื่อให้ก๊อปปี้ง่าย
                 const box = document.createElement('div');
                 box.className = "bg-white p-4 rounded-xl border border-blue-200 shadow-xs flex flex-col justify-between";
                 box.innerHTML = `
@@ -290,7 +286,7 @@
             });
         }
 
-        // --- 2. ฟังก์ชันแยกข้อความอัจฉริยะ (อัปเกรดระบบตรวจจับเบอร์ 10 หลัก และ ปณ. 5 หลัก) ---
+        // --- 2. ฟังก์ชันแยกข้อความอัจฉริยะ ---
         function parseCopiedText() {
             const rawText = document.getElementById('rawPasteInput').value.trim();
             if (!rawText) {
@@ -300,46 +296,41 @@
 
             let remainingText = rawText;
             
-            // 1. ค้นหาและดึงเบอร์โทรศัพท์ 10 หลัก (0XXXXXXXXX)
             const phoneRegex = /(0\d{9})/g;
             const phoneMatch = remainingText.match(phoneRegex);
             let detectedPhone = "";
             if (phoneMatch) {
                 detectedPhone = phoneMatch[0];
-                remainingText = remainingText.replace(detectedPhone, '').trim(); // ลบเบอร์ออกจากข้อความหลัก
+                remainingText = remainingText.replace(detectedPhone, '').trim();
             }
 
-            // 2. ค้นหาและดึงรหัสไปรษณีย์ 5 หลัก (\b\d{5}\b ป้องกันไม่ให้ไปดึงเลขที่บ้าน)
             const zipRegex = /\b(\d{5})\b/g;
             const zipMatch = remainingText.match(zipRegex);
             let detectedZip = "";
             if (zipMatch) {
                 detectedZip = zipMatch[0];
-                remainingText = remainingText.replace(detectedZip, '').trim(); // ลบ ปณ. ออกชั่วคราวเพื่อแยกที่อยู่และชื่อได้คลีนขึ้น
+                remainingText = remainingText.replace(detectedZip, '').trim();
             }
 
-            // 3. นำข้อความที่เหลือมาแยกเป็นบรรทัดเพื่อแกะชื่อและที่อยู่
             const lines = remainingText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             let detectedName = "";
             let detectedAddress = "";
 
             if (lines.length > 0) {
-                detectedName = lines[0]; // บรรทัดแรกเป็นชื่อ
+                detectedName = lines[0];
                 if (detectedName && !detectedName.startsWith('คุณ')) {
                     detectedName = 'คุณ' + detectedName;
                 }
 
                 if (lines.length > 1) {
-                    detectedAddress = lines.slice(1).join(' '); // บรรทัดที่เหลือคือที่อยู่
+                    detectedAddress = lines.slice(1).join(' ');
                 }
             }
 
-            // 4. ถ้าระบบเจอ รหัสไปรษณีย์ 5 หลัก ให้นำกลับมาต่อท้ายที่ช่องที่อยู่ให้สวยงาม
             if (detectedZip) {
                 detectedAddress = detectedAddress ? `${detectedAddress} ${detectedZip}` : detectedZip;
             }
 
-            // นำค่าไปแสดงผลบนฟอร์ม
             document.getElementById('customerName').value = detectedName;
             document.getElementById('customerPhone').value = detectedPhone ? detectedPhone : '-';
             document.getElementById('customerAddress').value = detectedAddress;
@@ -627,7 +618,6 @@
         document.getElementById('editModeToggle').addEventListener('change', renderTables);
         renderTables();
 
-        // --- 7. ฟังก์ชันลบข้อมูล ---
         function deleteOrder(id) {
             if (confirm('แน่ใจน้าว่าจะลบข้อมูลออเดอร์นี้ออกจากสมุดบันทึก? 🧸')) {
                 db.ref('orders/' + id).remove()
@@ -636,7 +626,6 @@
             }
         }
 
-        // --- 8. ฟังก์ชัน Pop-up ดูและคัดลอกที่อยู่ ---
         function viewAddress(name, phone, address) {
             currentCopyText = `ผู้รับ: ${name}   เบอร์โทร: ${phone}   ที่อยู่: ${address}`;
             const modalTextContainer = document.getElementById('modalTextContainer');
@@ -662,7 +651,6 @@
             });
         }
 
-        // --- 9. ขยายดูรูปใหญ่ ---
         function openImageModal(imgSrc) {
             document.getElementById('modalBigImage').src = imgSrc;
             document.getElementById('imageModal').classList.remove('hidden');
@@ -672,7 +660,6 @@
             document.getElementById('imageModal').classList.add('hidden');
         }
 
-        // --- 10. พิมพ์ใบปะหน้า ---
         function printAddress(name, phone, address) {
             const printArea = document.getElementById('print-area');
             printArea.innerHTML = `ผู้รับ: ${name} &nbsp;&nbsp; เบอร์โทร: ${phone} &nbsp;&nbsp; ที่อยู่: ${address}`;
