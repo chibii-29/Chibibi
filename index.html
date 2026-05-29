@@ -3,16 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกและจัดการส่งของ (V2)</title>
+    <title>ระบบบันทึกและจัดการส่งของ (Cute Version)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chaiyo:wght@400;700&family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     
     <style>
-        /* จัดการหน้าปริ้นต์ให้สะอาด ไม่มี URL เว็บไซต์ หรือหัวกระดาษ/ท้ายกระดาษ */
+        body {
+            font-family: 'Kanit', 'Chaiyo', sans-serif;
+            background-color: #fdf6f0; /* สีครีมนมพาสเทล */
+        }
+        /* สำหรับหน้าปริ้นต์ให้สะอาด ไม่มี URL */
         @page {
             size: auto;
-            margin: 5mm; /* ตั้งระยะขอบเล็กน้อยป้องกันตกขอบเครื่องพิมพ์ */
+            margin: 5mm;
         }
         @media print {
             body * { display: none !important; }
@@ -20,7 +27,6 @@
             #print-area {
                 position: absolute;
                 left: 0; top: 0; width: 100%;
-                font-family: sans-serif;
                 font-size: 16pt;
                 line-height: 1.4;
                 color: #000;
@@ -28,88 +34,91 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen p-4 md:p-8">
+<body class="text-gray-700 min-h-screen p-4 md:p-8">
 
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">📦 ระบบจัดการออเดอร์และฝากของ V2</h1>
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-pink-500 drop-shadow-sm mb-2">✨ สมุดบันทึกน้องหมีจัดส่งของ ✨</h1>
+            <p class="text-sm text-amber-600/80 font-medium">จัดการออเดอร์และเช็กของฝากแบบง่าย ๆ สบายตา 🧸🍰</p>
+        </div>
 
-        <div class="bg-gradient-to-r from-indigo-50 to-blue-50 p-5 rounded-2xl border border-indigo-100 mb-6">
-            <h2 class="text-md font-bold text-indigo-800 mb-2 flex items-center gap-1">✨ ทางลัด: วางข้อความที่ก๊อบปี้มาเพื่อแยกช่องอัตโนมัติ</h2>
+        <div class="bg-gradient-to-r from-pink-100 to-amber-100 p-5 rounded-2xl border-2 border-pink-200/60 shadow-sm mb-6">
+            <h2 class="text-md font-bold text-pink-700 mb-2 flex items-center gap-1">🪄 กล่องวิเศษ: วางข้อความที่ก๊อบปี้มาตรงนี้เลย</h2>
             <div class="space-y-3">
-                <textarea id="rawPasteInput" rows="2" class="w-full p-2.5 bg-white border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm placeholder-gray-400" placeholder="วางข้อมูลผู้รับตรงนี้ เช่น: แจง 0866666690 [ขึ้นบรรทัดใหม่] 333 ม.1 ต.ไก่..."></textarea>
-                <button type="button" onclick="parseCopiedText()" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition shadow-sm cursor-pointer">🪄 แยกช่องข้อมูล</button>
+                <textarea id="rawPasteInput" rows="2" class="w-full p-2.5 bg-white/90 border border-pink-300 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none text-sm placeholder-gray-400" placeholder="วางข้อมูลผู้รับ เช่น: แจง 0866666690 [ขึ้นบรรทัดใหม่] 333 ม.1 ต.ไก่..."></textarea>
+                <button type="button" onclick="parseCopiedText()" class="w-full md:w-auto bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold px-6 py-2 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">✨ แยกช่องข้อมูล</button>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">📝 ข้อมูลออเดอร์ลูกค้า</h2>
+        <div class="bg-white p-6 rounded-3xl shadow-md border-2 border-amber-100 mb-8">
+            <h2 class="text-xl font-bold mb-4 text-amber-700 flex items-center gap-1">📝 เขียนรายละเอียดออเดอร์</h2>
             <form id="orderForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อลูกค้า</label>
-                    <input type="text" id="customerName" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">ชื่อลูกค้า</label>
+                    <input type="text" id="customerName" required class="w-full p-2.5 bg-amber-50/30 border border-amber-200 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">เบอร์โทรศัพท์</label>
-                    <input type="text" id="customerPhone" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">เบอร์โทรศัพท์</label>
+                    <input type="text" id="customerPhone" class="w-full p-2.5 bg-amber-50/30 border border-amber-200 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">วันที่บันทึก</label>
-                    <input type="date" id="recordDate" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">วันที่บันทึก</label>
+                    <input type="date" id="recordDate" required class="w-full p-2.5 bg-amber-50/30 border border-amber-200 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-600 mb-1">ที่อยู่ลูกค้า</label>
-                    <textarea id="customerAddress" rows="3" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="บ้านเลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์..."></textarea>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">ที่อยู่ลูกค้า</label>
+                    <textarea id="customerAddress" rows="3" required class="w-full p-2.5 bg-amber-50/30 border border-amber-200 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none" placeholder="พิมพ์หรือใช้กล่องวิเศษแยกช่องด้านบนได้เลยจ้า..."></textarea>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">แนบรูปภาพออเดอร์/สลิป (ย่อขนาดอัตโนมัติ)</label>
-                    <input type="file" id="itemImage" accept="image/*" class="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">📸 แนบรูปภาพออเดอร์/สลิป</label>
+                    <input type="file" id="itemImage" accept="image/*" class="w-full p-2 border border-dashed border-pink-300 rounded-xl bg-pink-50/30 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200 cursor-pointer">
                     <div id="imagePreviewContainer" class="mt-2 hidden">
-                        <img id="imagePreview" src="" class="h-20 w-20 object-cover rounded-lg border">
+                        <img id="imagePreview" src="" class="h-20 w-20 object-cover rounded-xl border-2 border-pink-200 shadow-sm">
                     </div>
                 </div>
                 
-                <div class="flex flex-wrap gap-6 md:col-span-3 my-2 bg-gray-50 p-3 rounded-lg">
+                <div class="flex flex-wrap gap-6 md:col-span-3 my-2 bg-purple-50 p-3 rounded-2xl border border-purple-100">
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="isItemsComplete" class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
-                        <span class="text-sm font-medium text-gray-700">✅ เช็กของครบแล้ว</span>
+                        <input type="checkbox" id="isItemsComplete" class="w-5 h-5 text-purple-500 rounded-lg border-purple-300 focus:ring-purple-400">
+                        <span class="text-sm font-semibold text-purple-700">📦 เช็กของครบแล้วน้า</span>
                     </label>
                     
-                    <div class="flex items-center space-x-4 border-l pl-6 border-gray-300">
-                        <span class="text-sm font-medium text-gray-600">การจัดการ:</span>
+                    <div class="flex items-center space-x-4 border-l pl-6 border-purple-200">
+                        <span class="text-sm font-semibold text-purple-600">สถานะ:</span>
                         <label class="flex items-center space-x-1.5 cursor-pointer">
-                            <input type="radio" name="shippingStatus" value="ส่งเลย" checked class="w-4 h-4 text-indigo-600">
-                            <span class="text-sm text-gray-700">🚀 ส่งเลย</span>
+                            <input type="radio" name="shippingStatus" value="ส่งเลย" checked class="w-4 h-4 text-pink-500 focus:ring-pink-400">
+                            <span class="text-sm font-medium text-gray-700">🚀 ส่งทันที</span>
                         </label>
                         <label class="flex items-center space-x-1.5 cursor-pointer">
-                            <input type="radio" name="shippingStatus" value="ฝากของ" class="w-4 h-4 text-indigo-600">
-                            <span class="text-sm text-gray-700">📥 ฝากของ</span>
+                            <input type="radio" name="shippingStatus" value="ฝากของ" class="w-4 h-4 text-purple-500 focus:ring-purple-400">
+                            <span class="text-sm font-medium text-gray-700">📥 ฝากไว้ก่อน</span>
                         </label>
                     </div>
                 </div>
 
                 <div class="md:col-span-3 text-right">
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg transition shadow-sm cursor-pointer">💾 บันทึกข้อมูล</button>
+                    <button type="submit" class="bg-emerald-400 hover:bg-emerald-500 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">💾 บันทึกข้อมูลเรียบร้อย</button>
                 </div>
             </form>
         </div>
 
-        <div class="flex justify-end items-center mb-4 bg-yellow-50 p-3 rounded-xl border border-yellow-200">
+        <div class="flex justify-end items-center mb-4 bg-red-50 p-3 rounded-2xl border border-red-200/60 shadow-sm">
             <label class="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" id="editModeToggle" class="w-4 h-4 text-yellow-600 rounded focus:ring-yellow-500">
-                <span class="text-sm font-semibold text-yellow-800">🛠️ เปิดโหมดแก้ไข (เพื่อลบข้อมูล)</span>
+                <input type="checkbox" id="editModeToggle" class="w-4 h-4 text-red-500 rounded focus:ring-red-400">
+                <span class="text-sm font-bold text-red-700">🛠️ เปิดโหมดแก้ไข (ติ๊กตรงนี้เพื่อเปิดปุ่มลบข้อมูล)</span>
             </label>
         </div>
 
         <div class="space-y-8">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="bg-emerald-50 px-6 py-4 border-b border-emerald-100">
-                    <h2 class="text-lg font-bold text-emerald-700 flex items-center gap-2">🚀 ตาราง: ส่งได้เลย (รวมของฝากที่ครบ 2 อาทิตย์แล้ว)</h2>
+            <div class="bg-white rounded-3xl shadow-md border border-emerald-100 overflow-hidden">
+                <div class="bg-emerald-100/70 px-6 py-4 border-b border-emerald-200">
+                    <h2 class="text-lg font-bold text-emerald-800 flex items-center gap-2">🚀 รายการที่ส่งได้เลย (รวมของฝากครบ 2 สัปดาห์แล้ว)</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold border-b border-gray-200">
+                            <tr class="bg-emerald-50/50 text-emerald-900 text-xs uppercase font-bold border-b border-emerald-100">
                                 <th class="p-4">รูป</th>
                                 <th class="p-4">วันที่บันทึก</th>
                                 <th class="p-4">ชื่อผู้รับ</th>
@@ -126,21 +135,21 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="bg-blue-50 px-6 py-4 border-b border-blue-100">
-                    <h2 class="text-lg font-bold text-blue-700 flex items-center gap-2">📥 ตาราง: ฝากของ</h2>
+            <div class="bg-white rounded-3xl shadow-md border border-purple-100 overflow-hidden">
+                <div class="bg-purple-100/70 px-6 py-4 border-b border-purple-200">
+                    <h2 class="text-lg font-bold text-purple-800 flex items-center gap-2">📥 รายการฝากของไว้ก่อน</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold border-b border-gray-200">
+                            <tr class="bg-purple-50/50 text-purple-900 text-xs uppercase font-bold border-b border-purple-100">
                                 <th class="p-4">รูป</th>
                                 <th class="p-4">วันที่บันทึก</th>
                                 <th class="p-4">ชื่อผู้รับ</th>
                                 <th class="p-4">เบอร์โทร</th>
                                 <th class="p-4">ที่อยู่</th>
                                 <th class="p-4 text-center">เช็กของ</th>
-                                <th class="p-4 text-center">จำนวนที่ฝาก</th>
+                                <th class="p-4 text-center">ฝากไว้แล้ว</th>
                                 <th class="p-4 text-right">จัดการ</th>
                             </tr>
                         </thead>
@@ -148,6 +157,20 @@
                             </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addressModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full border-2 border-pink-200 shadow-xl relative animate-fade-in">
+            <h3 class="text-lg font-bold text-pink-600 mb-3 flex items-center gap-1">📋 ข้อมูลที่อยู่ผู้รับ</h3>
+            
+            <div id="modalTextContainer" class="bg-pink-50/50 p-4 rounded-2xl border border-pink-100 text-gray-800 text-base leading-relaxed mb-4 select-all">
+                </div>
+
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold px-4 py-2 rounded-xl text-sm transition cursor-pointer">ปิดหน้าต่าง</button>
+                <button onclick="copyAddressText()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold px-5 py-2 rounded-xl text-sm transition shadow-sm active:scale-95 cursor-pointer flex items-center gap-1">✂️ คัดลอกที่อยู่</button>
             </div>
         </div>
     </div>
@@ -170,53 +193,44 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let compressedImageBase64 = ""; // ตัวแปรเก็บรูปภาพที่ย่อแล้ว
+        let compressedImageBase64 = ""; 
+        let currentCopyText = ""; // ตัวแปรเก็บข้อความที่จะคัดลอก
 
         // ตั้งค่าวันที่ปัจจุบันในฟอร์ม
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
 
-        // --- 2. ฟังก์ชันแยกแยะข้อความที่ก๊อบปี้มาวาง (Auto Parser) ---
+        // --- 2. ฟังก์ชันแยกแยะข้อความที่คัดลอกมาวาง ---
         function parseCopiedText() {
             const rawText = document.getElementById('rawPasteInput').value.trim();
             if (!rawText) {
-                alert('กรุณาวางข้อความก่อนกดแยกช่องครับ');
+                alert('กรุณาวางข้อความก่อนน้า นุ้งหมีหาข้อมูลไม่เจอ 🐻');
                 return;
             }
 
-            // แบ่งข้อความตามการขึ้นบรรทัดใหม่
             const lines = rawText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            
             let detectedName = "";
             let detectedPhone = "";
             let detectedAddress = "";
-
-            // ตรวจหาเบอร์โทรศัพท์ (หาตัวเลขติดกัน 9-10 หลัก)
             const phoneRegex = /(0\d{8,9})/g;
 
             if (lines.length > 0) {
-                // สมมติว่าบรรทัดแรกมักจะมีชื่อและเบอร์โทรปนกันอยู่
                 let firstLine = lines[0];
                 const phoneMatch = firstLine.match(phoneRegex);
                 
                 if (phoneMatch) {
                     detectedPhone = phoneMatch[0];
-                    // ลบเบอร์โทรออกจากบรรทัดแรกเพื่อดึงเอาแต่ชื่อ
                     detectedName = firstLine.replace(detectedPhone, '').trim();
                 } else {
                     detectedName = firstLine;
                 }
 
-                // ขัดเกลาชื่อให้อยู่ในฟอร์แมต "คุณ..." ตามเงื่อนไข
                 if (detectedName) {
-                    // ป้องกันคำว่า คุณ ซ้ำซ้อน
                     if (!detectedName.startsWith('คุณ')) {
                         detectedName = 'คุณ' + detectedName;
                     }
                 }
 
-                // ส่วนบรรทัดที่เหลือที่เอามาต่อกันเป็นที่อยู่ทั้งหมด
                 if (lines.length > 1) {
-                    // ตรวจสอบเพิ่มเติมว่าบรรทัดที่ 2 เป็นเบอร์โทรเพียวๆ หรือไม่ (ถ้าบรรทัดแรกหาเบอร์ไม่เจอ)
                     let startIndex = 1;
                     if (!detectedPhone) {
                         const line2Match = lines[1].match(phoneRegex);
@@ -229,15 +243,14 @@
                 }
             }
 
-            // นำข้อมูลที่แยกได้ไปกรอกลงช่องต่างๆ ในฟอร์ม
             if (detectedName) document.getElementById('customerName').value = detectedName;
             if (detectedPhone) document.getElementById('customerPhone').value = detectedPhone;
             if (detectedAddress) document.getElementById('customerAddress').value = detectedAddress;
             
-            alert('แยกช่องข้อมูลสำเร็จแล้ว! ตรวจสอบความถูกต้องในฟอร์มด้านล่างได้เลย');
+            alert('🪄 แยกช่องให้เรียบร้อยแล้วจ้า! ลองตรวจความถูกต้องอีกทีน้า');
         }
 
-        // --- 3. ระบบบีบอัดและย่อรูปภาพ (Image Compression) ---
+        // --- 3. ระบบบีบอัดและย่อรูปภาพ ---
         document.getElementById('itemImage').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -248,7 +261,6 @@
                 const img = new Image();
                 img.src = event.target.result;
                 img.onload = function() {
-                    // กำหนดค่ามาตรฐานในการย่อรูป (สูงสุดไม่เกิน 500px)
                     const max_size = 500;
                     let width = img.width;
                     let height = img.height;
@@ -265,17 +277,13 @@
                         }
                     }
 
-                    // สร้าง Canvas เพื่อทำการเรนเดอร์และบีบอัดรูป
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // ย่อคุณภาพรูปภาพเหลือ 0.6 (60%) เป็นไฟล์ JPEG ขนาดเบาหวิว
                     compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    
-                    // แสดงตัวอย่างภาพขนาดจิ๋วในฟอร์ม
                     document.getElementById('imagePreview').src = compressedImageBase64;
                     document.getElementById('imagePreviewContainer').classList.remove('hidden');
                 }
@@ -299,7 +307,6 @@
             e.preventDefault();
             
             let name = document.getElementById('customerName').value.trim();
-            // ตรวจสอบชื่ออีกครั้งว่ามีคำว่า คุณ หรือยังก่อนส่งฐานข้อมูล
             if (!name.startsWith('คุณ')) {
                 name = 'คุณ' + name;
             }
@@ -318,9 +325,8 @@
                 address: address,
                 isComplete: isComplete,
                 status: status,
-                imageData: compressedImageBase64 // ส่งรูปภาพที่ผ่านการย่อแล้วขึ้นระบบ
+                imageData: compressedImageBase64 
             }).then(() => {
-                // รีเซ็ตล้างค่าฟอร์มทั้งหมดหลังเซฟเสร็จสิ้น
                 document.getElementById('customerName').value = '';
                 document.getElementById('customerPhone').value = '';
                 document.getElementById('customerAddress').value = '';
@@ -330,13 +336,13 @@
                 document.getElementById('imagePreviewContainer').classList.add('hidden');
                 compressedImageBase64 = "";
                 document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
-                alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+                alert('บันทึกออเดอร์หวานแหววเรียบร้อย! 🍰');
             }).catch((error) => {
                 alert('เกิดข้อผิดพลาด: ' + error.message);
             });
         });
 
-        // --- 6. ดึงข้อมูลจาก Firebase และอัปเดตตาราง UI ---
+        // --- 6. ดึงข้อมูลและอัปเดตตาราง UI ---
         function renderTables() {
             db.ref('orders').on('value', (snapshot) => {
                 const readyTable = document.getElementById('readyToShipTable');
@@ -345,7 +351,6 @@
                 readyTable.innerHTML = '';
                 holdTable.innerHTML = '';
 
-                // อ่านสถานะสวิตช์โหมดแก้ไขปัจจุบัน
                 const isEditMode = document.getElementById('editModeToggle').checked;
 
                 if (snapshot.exists()) {
@@ -355,23 +360,20 @@
                         const daysCount = calculateDaysInput(data.date);
                         
                         const row = document.createElement('tr');
-                        row.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                        row.className = "hover:bg-amber-50/40 transition border-b border-gray-100";
                         
-                        // แสดงรูปจิ๋วในตาราง (ถ้าไม่มี จะแสดงไอคอนกล่องแทน)
                         const imgTag = data.imageData 
-                            ? `<img src="${data.imageData}" class="w-10 h-10 object-cover rounded-md border">` 
-                            : `<div class="w-10 h-10 bg-gray-100 flex items-center justify-center rounded-md text-gray-400 text-xs">📦</div>`;
+                            ? `<img src="${data.imageData}" class="w-10 h-10 object-cover rounded-xl border-2 border-pink-100 shadow-xs">` 
+                            : `<div class="w-10 h-10 bg-amber-50 flex items-center justify-center rounded-xl text-amber-400 text-lg">🍰</div>`;
 
                         const checkIcon = data.isComplete 
-                            ? '<span class="text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-full text-xs">✓ ครบแล้ว</span>' 
-                            : '<span class="text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs">ยังไม่ครบ</span>';
+                            ? '<span class="text-emerald-700 font-bold bg-emerald-100/70 px-2.5 py-1 rounded-full text-xs">✓ ครบแล้ว</span>' 
+                            : '<span class="text-amber-700 bg-amber-100/70 px-2.5 py-1 rounded-full text-xs">รอตรวจของ</span>';
                         
-                        // ปุ่มลบที่จะปรากฏขึ้นเมื่อเปิดสวิตช์โหมดแก้ไขสำเร็จ
                         const deleteBtn = isEditMode 
-                            ? `<button onclick="deleteOrder('${id}')" class="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-2.5 py-1.5 rounded-md cursor-pointer transition shadow-sm">ลบ</button>` 
+                            ? `<button onclick="deleteOrder('${id}')" class="bg-rose-400 hover:bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer transition shadow-xs active:scale-95">ลบ</button>` 
                             : '';
 
-                        // เช็กเงื่อนไขดีดตารางอัตโนมัติ: ถ้าฝากของเกิน 14 วัน (2 อาทิตย์) ย้ายไปหน้า "ส่งเลย"
                         let currentStatus = data.status;
                         let isAutoMoved = false;
                         if (data.status === 'ฝากของ' && daysCount >= 14) {
@@ -379,22 +381,27 @@
                             isAutoMoved = true;
                         }
 
-                        // ตกแต่งความสะอาดของการส่งค่าตัวแปรเบอร์โทรสำหรับใช้ใน JavaScript string
                         const cleanPhone = data.phone || '-';
                         const cleanAddress = (data.address || '').replace(/[\r\n]+/g, ' ');
 
+                        // สร้างชุดปุ่มสำหรับดูที่อยู่ และ ปริ้นต์
+                        const actionButtons = `
+                            <button onclick="viewAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">👁️ ดูที่อยู่</button>
+                            <button onclick="printAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">🖨️ ปริ้นต์</button>
+                        `;
+
                         if (currentStatus === 'ส่งเลย') {
-                            const note = isAutoMoved ? '<span class="text-red-600 text-xs font-bold bg-red-50 p-1 rounded">⏰ ฝากเกิน 2 สัปดาห์!</span>' : '<span class="text-gray-400">-</span>';
+                            const note = isAutoMoved ? '<span class="text-rose-600 text-xs font-bold bg-rose-100 px-2 py-1 rounded-lg">⏰ ฝากครบ 2 สัปดาห์แล้ว!</span>' : '<span class="text-gray-400">-</span>';
                             row.innerHTML = `
                                 <td class="p-4">${imgTag}</td>
                                 <td class="p-4 text-gray-500 whitespace-nowrap">${data.date}</td>
-                                <td class="p-4 font-semibold text-gray-900">${data.name}</td>
-                                <td class="p-4 text-gray-700">${cleanPhone}</td>
+                                <td class="p-4 font-bold text-gray-900">${data.name}</td>
+                                <td class="p-4 text-gray-700 font-medium">${cleanPhone}</td>
                                 <td class="p-4 text-gray-600 max-w-xs truncate">${data.address}</td>
                                 <td class="p-4 text-center">${checkIcon}</td>
                                 <td class="p-4 text-center">${note}</td>
                                 <td class="p-4 text-right whitespace-nowrap space-x-1">
-                                    <button onclick="printAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">🖨️ ปริ้นต์ที่อยู่</button>
+                                    ${actionButtons}
                                     ${deleteBtn}
                                 </td>
                             `;
@@ -403,13 +410,13 @@
                             row.innerHTML = `
                                 <td class="p-4">${imgTag}</td>
                                 <td class="p-4 text-gray-500 whitespace-nowrap">${data.date}</td>
-                                <td class="p-4 font-semibold text-gray-900">${data.name}</td>
-                                <td class="p-4 text-gray-700">${cleanPhone}</td>
+                                <td class="p-4 font-bold text-gray-900">${data.name}</td>
+                                <td class="p-4 text-gray-700 font-medium">${cleanPhone}</td>
                                 <td class="p-4 text-gray-600 max-w-xs truncate">${data.address}</td>
                                 <td class="p-4 text-center">${checkIcon}</td>
-                                <td class="p-4 text-center font-bold text-blue-600">${daysCount} วัน</td>
+                                <td class="p-4 text-center font-bold text-purple-600 bg-purple-50 rounded-xl">${daysCount} วัน</td>
                                 <td class="p-4 text-right whitespace-nowrap space-x-1">
-                                    <button onclick="printAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">🖨️ ปริ้นต์ที่อยู่</button>
+                                    ${actionButtons}
                                     ${deleteBtn}
                                 </td>
                             `;
@@ -417,31 +424,56 @@
                         }
                     });
                 } else {
-                    readyTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-gray-50/50">ไม่มีข้อมูลรายการส่งของ</td></tr>`;
-                    holdTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-gray-50/50">ไม่มีข้อมูลรายการฝากของ</td></tr>`;
+                    readyTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-white">ไม่มีข้อมูลรายการส่งของจ้า 🐻</td></tr>`;
+                    holdTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-white">ไม่มีข้อมูลรายการฝากของจ้า 🍯</td></tr>`;
                 }
             });
         }
 
-        // เมื่อเปิด-ปิดสวิตช์โหมดแก้ไข ให้ตารางอัปเดตเพื่อโชว์/ซ่อนปุ่มลบทันที
         document.getElementById('editModeToggle').addEventListener('change', renderTables);
-
-        // รันฟังก์ชันวาดตารางครั้งแรกตอนเปิดโปรแกรม
         renderTables();
 
         // --- 7. ฟังก์ชันลบข้อมูล ---
         function deleteOrder(id) {
-            if (confirm('คุณแน่ใจใช่ไหมว่าจะลบข้อมูลของลูกค้ารายนี้ออกจากระบบ?')) {
+            if (confirm('แน่ใจน้าว่าจะลบข้อมูลออเดอร์นี้ออกจากสมุดบันทึก? 🧸')) {
                 db.ref('orders/' + id).remove()
-                    .then(() => alert('ลบข้อมูลสำเร็จเรียบร้อยแล้ว'))
-                    .catch((err) => alert('เกิดข้อผิดพลาดในการลบ: ' + err.message));
+                    .then(() => alert('ลบข้อมูลเรียบร้อยแล้วจ้า'))
+                    .catch((err) => alert('เกิดข้อผิดพลาด: ' + err.message));
             }
         }
 
-        // --- 8. ฟังก์ชันสั่งพิมพ์ข้อมูลสไตล์ใบปะหน้าสะอาดตาพิมพ์ต่อกันไปเลย ---
+        // --- 8. ฟังก์ชันดูที่อยู่แบบ Pop-up และเตรียมข้อความไว้ Copy ---
+        function viewAddress(name, phone, address) {
+            currentCopyText = `ผู้รับ: ${name}   เบอร์โทร: ${phone}   ที่อยู่: ${address}`;
+            
+            const modalTextContainer = document.getElementById('modalTextContainer');
+            modalTextContainer.innerHTML = `
+                <strong>ผู้รับ:</strong> ${name} <br>
+                <strong>เบอร์โทร:</strong> ${phone} <br>
+                <strong>ที่อยู่:</strong> ${address}
+            `;
+            
+            document.getElementById('addressModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('addressModal').classList.add('hidden');
+        }
+
+        // ฟังก์ชันคลิกปุ่มแล้วคัดลอกข้อความลงคลิปบอร์ดทันที
+        function copyAddressText() {
+            if (!currentCopyText) return;
+            navigator.clipboard.writeText(currentCopyText).then(() => {
+                alert('✂️ คัดลอกข้อมูลชื่อและที่อยู่ลงคลิปบอร์ดเรียบร้อย พร้อมเอาไปวางส่งต่อได้เลยจ้า!');
+                closeModal();
+            }).catch(err => {
+                alert('ไม่สามารถคัดลอกได้อัตโนมัติ กรุณาครอบไฮไลท์เพื่อคัดลอกเองน้า');
+            });
+        }
+
+        // --- 9. ฟังก์ชันสั่งพิมพ์ข้อมูลสไตล์สะอาดพิมพ์ต่อกันไปเลย ---
         function printAddress(name, phone, address) {
             const printArea = document.getElementById('print-area');
-            // เรียงข้อมูลต่อกันตามบรีฟเด๊ะๆ: ชื่อผู้รับ เบอร์โทร เวลาพิมพ์ ต่อด้วยที่อยู่
             printArea.innerHTML = `ผู้รับ: ${name} &nbsp;&nbsp; เบอร์โทร: ${phone} &nbsp;&nbsp; ที่อยู่: ${address}`;
             window.print();
         }
