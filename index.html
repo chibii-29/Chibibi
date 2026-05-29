@@ -50,7 +50,7 @@
         </div>
 
         <div class="bg-white p-6 rounded-3xl shadow-md border-2 border-amber-100 mb-8">
-            <h2 class="text-xl font-bold mb-4 text-amber-700 flex items-center gap-1">📝 เขียนรายละเอียดออเดอร์</h2>
+            <h2 id="formTitle" class="text-xl font-bold mb-4 text-amber-700 flex items-center gap-1">📝 เขียนรายละเอียดออเดอร์</h2>
             <form id="orderForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-pink-600 mb-1">🟢 ชื่อไลน์ลูกค้า</label>
@@ -99,8 +99,9 @@
                     </div>
                 </div>
 
-                <div class="md:col-span-3 text-right">
-                    <button type="submit" class="bg-emerald-400 hover:bg-emerald-500 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">💾 บันทึกข้อมูลเรียบร้อย</button>
+                <div class="md:col-span-3 text-right flex justify-end gap-2">
+                    <button type="button" id="cancelEditBtn" onclick="resetFormState()" class="hidden bg-gray-400 hover:bg-gray-500 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">ยกเลิกการแก้ไข</button>
+                    <button type="submit" id="submitBtn" class="bg-emerald-400 hover:bg-emerald-500 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">💾 บันทึกข้อมูลเรียบร้อย</button>
                 </div>
             </form>
         </div>
@@ -114,8 +115,9 @@
 
         <div class="space-y-8">
             <div class="bg-white rounded-3xl shadow-md border border-emerald-100 overflow-hidden">
-                <div class="bg-emerald-100/70 px-6 py-4 border-b border-emerald-200">
+                <div class="bg-emerald-100/70 px-6 py-4 border-b border-emerald-200 flex justify-between items-center">
                     <h2 class="text-lg font-bold text-emerald-800 flex items-center gap-2">🚀 รายการที่ส่งได้เลย</h2>
+                    <span id="readyCount" class="bg-emerald-200 text-emerald-900 text-xs font-bold px-3 py-1 rounded-full">0 คน</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -138,8 +140,9 @@
             </div>
 
             <div class="bg-white rounded-3xl shadow-md border border-purple-100 overflow-hidden">
-                <div class="bg-purple-100/70 px-6 py-4 border-b border-purple-200">
+                <div class="bg-purple-100/70 px-6 py-4 border-b border-purple-200 flex justify-between items-center">
                     <h2 class="text-lg font-bold text-purple-800 flex items-center gap-2">📥 รายการฝากของไว้ก่อน</h2>
+                    <span id="holdCount" class="bg-purple-200 text-purple-900 text-xs font-bold px-3 py-1 rounded-full">0 คน</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -201,6 +204,7 @@
 
         let compressedImagesArray = []; 
         let currentCopyText = ""; 
+        let currentEditId = null; // ตัวแปรเก็บ ID ออเดอร์ที่กำลังแก้ไข
 
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
 
@@ -267,8 +271,11 @@
             if (!files.length) return;
 
             const previewContainer = document.getElementById('imagesPreviewContainer');
-            previewContainer.innerHTML = ''; 
-            compressedImagesArray = []; 
+            // ถ้าไม่ใช่โหมดแก้ไขให้เคลียร์รูปเก่า แต่ถ้าใช่โหมดแก้ไข ให้เก็บรูปเก่าไว้แล้วบวกเพิ่มเข้าไป
+            if (!currentEditId) {
+                previewContainer.innerHTML = ''; 
+                compressedImagesArray = []; 
+            }
 
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
@@ -323,7 +330,7 @@
             return differenceInDays >= 0 ? differenceInDays : 0;
         }
 
-        // --- 5. บันทึกข้อมูลลง Firebase ---
+        // --- 5. บันทึกข้อมูลลง Firebase (รองรับโหมดแก้ไขทับ ID เดิม) ---
         document.getElementById('orderForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
@@ -339,8 +346,7 @@
             const isComplete = document.getElementById('isItemsComplete').checked;
             const status = document.querySelector('input[name="shippingStatus"]:checked').value;
 
-            const newOrderRef = db.ref('orders').push();
-            newOrderRef.set({
+            const orderData = {
                 lineID: lineID,
                 name: name,
                 phone: phone ? phone : '-',
@@ -349,22 +355,94 @@
                 isComplete: isComplete,
                 status: status,
                 imagesList: compressedImagesArray 
-            }).then(() => {
-                document.getElementById('customerLine').value = '';
-                document.getElementById('customerName').value = '';
-                document.getElementById('customerPhone').value = '';
-                document.getElementById('customerAddress').value = '';
-                document.getElementById('isItemsComplete').checked = false;
-                document.getElementById('itemImages').value = '';
-                document.getElementById('rawPasteInput').value = '';
-                document.getElementById('imagesPreviewContainer').innerHTML = '';
-                compressedImagesArray = [];
-                document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
-                alert('บันทึกข้อมูลออเดอร์เรียบร้อยแล้วจ้า! 🍰');
-            }).catch((error) => {
-                alert('เกิดข้อผิดพลาด: ' + error.message);
-            });
+            };
+
+            if (currentEditId) {
+                // โหมดแก้ไข: อัปเดตข้อมูลทับที่ ID เดิม
+                db.ref('orders/' + currentEditId).set(orderData)
+                .then(() => {
+                    resetFormState();
+                    alert('🔄 แก้ไขข้อมูลออเดอร์เรียบร้อยแล้วจ้า! 🍰');
+                }).catch((error) => {
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                });
+            } else {
+                // โหมดเพิ่มปกติ: สร้างออเดอร์ใหม่
+                const newOrderRef = db.ref('orders').push();
+                newOrderRef.set(orderData).then(() => {
+                    resetFormState();
+                    alert('บันทึกข้อมูลออเดอร์เรียบร้อยแล้วจ้า! 🍰');
+                }).catch((error) => {
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                });
+            }
         });
+
+        // ฟังก์ชันล้างฟอร์มและกลับสู่สถานะปกติ
+        function resetFormState() {
+            currentEditId = null;
+            document.getElementById('formTitle').innerHTML = '📝 เขียนรายละเอียดออเดอร์';
+            document.getElementById('submitBtn').innerHTML = '💾 บันทึกข้อมูลเรียบร้อย';
+            document.getElementById('submitBtn').className = "bg-emerald-400 hover:bg-emerald-500 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer";
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+
+            document.getElementById('customerLine').value = '';
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerAddress').value = '';
+            document.getElementById('isItemsComplete').checked = false;
+            document.getElementById('itemImages').value = '';
+            document.getElementById('rawPasteInput').value = '';
+            document.getElementById('imagesPreviewContainer').innerHTML = '';
+            compressedImagesArray = [];
+            document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        // ฟังก์ชันดึงข้อมูลคนที่จะแก้ขึ้นไปบนฟอร์ม
+        function startEditOrder(id, lineID, name, phone, date, address, isComplete, status, imagesListJson) {
+            currentEditId = id;
+            
+            // เปลี่ยนหน้าตาฟอร์มให้รู้ว่ากำลังแก้ไขอยู่
+            document.getElementById('formTitle').innerHTML = '🛠️ กำลังแก้ไขข้อมูลของ ' + name;
+            document.getElementById('submitBtn').innerHTML = '🆙 อัปเดตข้อมูลที่แก้ไข';
+            document.getElementById('submitBtn').className = "bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer";
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            // เติมค่าเก่าลงในช่องกรอก
+            document.getElementById('customerLine').value = lineID === '-' ? '' : lineID;
+            document.getElementById('customerName').value = name;
+            document.getElementById('customerPhone').value = phone === '-' ? '' : phone;
+            document.getElementById('recordDate').value = date;
+            document.getElementById('customerAddress').value = address;
+            document.getElementById('isItemsComplete').checked = isComplete;
+            
+            // ติ๊กสถานะเดิม
+            const radios = document.getElementsByName('shippingStatus');
+            for (let radio of radios) {
+                if (radio.value === status) {
+                    radio.checked = true;
+                }
+            }
+
+            // ดึงรูปเดิมมาแสดงผลพรีวิว
+            const previewContainer = document.getElementById('imagesPreviewContainer');
+            previewContainer.innerHTML = '';
+            compressedImagesArray = [];
+            
+            if (imagesListJson) {
+                const oldImages = JSON.parse(decodeURIComponent(imagesListJson));
+                oldImages.forEach(imgBase64 => {
+                    compressedImagesArray.push(imgBase64);
+                    const imgWrapper = document.createElement('img');
+                    imgWrapper.src = imgBase64;
+                    imgWrapper.className = "h-16 w-16 object-cover rounded-xl border-2 border-amber-200 shadow-xs";
+                    previewContainer.appendChild(imgWrapper);
+                });
+            }
+
+            // เลื่อนหน้าจอขึ้นไปที่ฟอร์มด้านบนสุดอัตโนมัติเพื่อให้พิมพ์สะดวก
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
         // --- 6. ดึงข้อมูลและอัปเดตตาราง UI ---
         function renderTables() {
@@ -374,6 +452,9 @@
                 
                 readyTable.innerHTML = '';
                 holdTable.innerHTML = '';
+
+                let readyCount = 0;
+                let holdCount = 0;
 
                 const isEditMode = document.getElementById('editModeToggle').checked;
 
@@ -415,12 +496,17 @@
                         const cleanPhone = data.phone || '-';
                         const cleanAddress = (data.address || '').replace(/[\r\n]+/g, ' ');
 
+                        // แปลงก้อนรูปภาพเป็น String เพื่อให้ส่งไปฟังก์ชันแก้ไขได้ง่าย
+                        const imagesJsonStr = data.imagesList ? encodeURIComponent(JSON.stringify(data.imagesList)) : '';
+
                         const actionButtons = `
+                            <button onclick="startEditOrder('${id}', '${cleanLine}', '${data.name}', '${cleanPhone}', '${data.date}', '${cleanAddress}', ${data.isComplete || false}, '${data.status}', '${imagesJsonStr}')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">✏️ แก้ไข</button>
                             <button onclick="viewAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">👁️ ดูที่อยู่</button>
                             <button onclick="printAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">🖨️ ปริ้นต์</button>
                         `;
 
                         if (currentStatus === 'ส่งเลย') {
+                            readyCount++;
                             const note = isAutoMoved 
                                 ? `<span class="text-rose-700 text-xs font-bold bg-rose-100 px-2.5 py-1 rounded-full shadow-xs border border-rose-200 block text-center">🚨 ฝากครบ 14 วันแล้ว (ย้ายอัตโนมัติ)</span>` 
                                 : `<span class="text-emerald-700 text-xs font-bold bg-emerald-100 px-2.5 py-1 rounded-full block text-center">🚀 ส่งทันที</span>`;
@@ -440,6 +526,7 @@
                             `;
                             readyTable.appendChild(row);
                         } else {
+                            holdCount++;
                             row.innerHTML = `
                                 <td class="p-4">${imagesHTML}</td>
                                 <td class="p-4 font-semibold text-pink-600 whitespace-nowrap">🟢 ${cleanLine}</td>
@@ -460,6 +547,10 @@
                     readyTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-white">ไม่มีข้อมูลรายการส่งของจ้า 🐻</td></tr>`;
                     holdTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-white">ไม่มีข้อมูลรายการฝากของจ้า 🍯</td></tr>`;
                 }
+
+                // อัปเดตตัวเลขนับจำนวนคนบนหัวตาราง
+                document.getElementById('readyCount').innerText = readyCount + ' คน';
+                document.getElementById('holdCount').innerText = holdCount + ' คน';
             });
         }
 
