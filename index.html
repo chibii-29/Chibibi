@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกและจัดการส่งของ (Cute V3.1)</title>
+    <title>ระบบบันทึกและจัดการส่งของ (Cute V3.3)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,14 +37,14 @@
 
     <div class="max-w-6xl mx-auto">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-pink-500 drop-shadow-sm mb-2">✨ ระบบจัดส่งของร้าน chibi ✨</h1>
-            <p class="text-sm text-amber-600/80 font-medium">เพิ่มระบบแจ้งเตือน "ฝากครบกำหนดแล้ว" ในตารางส่งของอัตโนมัติ 🧸🍰</p>
+            <h1 class="text-4xl font-bold text-pink-500 drop-shadow-sm mb-2">✨ ระบบส่งของร้านChibi ✨</h1>
+            <p class="text-sm text-amber-600/80 font-medium">ขอให้ลูกค้าใจดีกับแจง🫶🏻</p>
         </div>
 
         <div class="bg-gradient-to-r from-pink-100 to-amber-100 p-5 rounded-2xl border-2 border-pink-200/60 shadow-sm mb-6">
-            <h2 class="text-md font-bold text-pink-700 mb-2 flex items-center gap-1">🪄 กล่องวิเศษ: วางข้อความที่ก๊อบปี้มาตรงนี้เลย</h2>
+            <h2 class="text-md font-bold text-pink-700 mb-2 flex items-center gap-1">🪄 แยก : วางข้อความที่ก๊อบปี้มาตรงนี้เลย</h2>
             <div class="space-y-3">
-                <textarea id="rawPasteInput" rows="2" class="w-full p-2.5 bg-white/90 border border-pink-300 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none text-sm placeholder-gray-400" placeholder="วางข้อมูลผู้รับ เช่น: แจง 0866666690 [ขึ้นบรรทัดใหม่] 333 ม.1 ต.ไก่..."></textarea>
+                <textarea id="rawPasteInput" rows="2" class="w-full p-2.5 bg-white/90 border border-pink-300 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none text-sm placeholder-gray-400" placeholder="วางข้อมูลผู้รับ เช่น: แจง 0866666690 333 ม.1 ต.ไก่ อ.เมือง จ.ระยอง 21000"></textarea>
                 <button type="button" onclick="parseCopiedText()" class="w-full md:w-auto bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold px-6 py-2 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">✨ แยกช่องข้อมูล</button>
             </div>
         </div>
@@ -53,7 +53,7 @@
             <h2 class="text-xl font-bold mb-4 text-amber-700 flex items-center gap-1">📝 เขียนรายละเอียดออเดอร์</h2>
             <form id="orderForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-semibold text-pink-600 mb-1">🟢 ชื่อไลน์ลูกค้า (ชื่อหลัก)</label>
+                    <label class="block text-sm font-semibold text-pink-600 mb-1">🟢 ชื่อไลน์ลูกค้า</label>
                     <input type="text" id="customerLine" required class="w-full p-2.5 bg-pink-50/20 border border-pink-300 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none font-semibold" placeholder="เช่น Line ID หรือ ชื่อในไลน์">
                 </div>
                 <div>
@@ -108,14 +108,14 @@
         <div class="flex justify-end items-center mb-4 bg-red-50 p-3 rounded-2xl border border-red-200/60 shadow-sm">
             <label class="flex items-center space-x-2 cursor-pointer">
                 <input type="checkbox" id="editModeToggle" class="w-4 h-4 text-red-500 rounded focus:ring-red-400">
-                <span class="text-sm font-bold text-red-700">🛠️ เปิดโหมดแก้ไข (ติ๊กตรงนี้เพื่อเปิดปุ่มลบข้อมูล)</span>
+                <span class="text-sm font-bold text-red-700">🛠️ เปิดโหมดแก้ไข</span>
             </label>
         </div>
 
         <div class="space-y-8">
             <div class="bg-white rounded-3xl shadow-md border border-emerald-100 overflow-hidden">
                 <div class="bg-emerald-100/70 px-6 py-4 border-b border-emerald-200">
-                    <h2 class="text-lg font-bold text-emerald-800 flex items-center gap-2">🚀 รายการที่ส่งได้เลย (รวมของฝากครบ 2 สัปดาห์แล้ว)</h2>
+                    <h2 class="text-lg font-bold text-emerald-800 flex items-center gap-2">🚀 รายการที่ส่งได้เลย</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -146,7 +146,7 @@
                         <thead>
                             <tr class="bg-purple-50/50 text-purple-900 text-xs uppercase font-bold border-b border-purple-100">
                                 <th class="p-4">รูปภาพ</th>
-                                <th class="p-4">ชื่อไลน์ (หลัก)</th>
+                                <th class="p-4">ชื่อไลน์</th>
                                 <th class="p-4">ชื่อผู้รับ</th>
                                 <th class="p-4">เบอร์โทร</th>
                                 <th class="p-4">ที่อยู่</th>
@@ -204,7 +204,7 @@
 
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
 
-        // --- 2. แยกข้อความอัตโนมัติ ---
+        // --- 2. ฟังก์ชันแยกข้อความอัจฉริยะ (อัปเกรดระบบตรวจจับเบอร์ 10 หลัก และ ปณ. 5 หลัก) ---
         function parseCopiedText() {
             const rawText = document.getElementById('rawPasteInput').value.trim();
             if (!rawText) {
@@ -212,47 +212,53 @@
                 return;
             }
 
-            const lines = rawText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            let detectedName = "";
+            let remainingText = rawText;
+            
+            // 1. ค้นหาและดึงเบอร์โทรศัพท์ 10 หลัก (0XXXXXXXXX)
+            const phoneRegex = /(0\d{9})/g;
+            const phoneMatch = remainingText.match(phoneRegex);
             let detectedPhone = "";
+            if (phoneMatch) {
+                detectedPhone = phoneMatch[0];
+                remainingText = remainingText.replace(detectedPhone, '').trim(); // ลบเบอร์ออกจากข้อความหลัก
+            }
+
+            // 2. ค้นหาและดึงรหัสไปรษณีย์ 5 หลัก (\b\d{5}\b ป้องกันไม่ให้ไปดึงเลขที่บ้าน)
+            const zipRegex = /\b(\d{5})\b/g;
+            const zipMatch = remainingText.match(zipRegex);
+            let detectedZip = "";
+            if (zipMatch) {
+                detectedZip = zipMatch[0];
+                remainingText = remainingText.replace(detectedZip, '').trim(); // ลบ ปณ. ออกชั่วคราวเพื่อแยกที่อยู่และชื่อได้คลีนขึ้น
+            }
+
+            // 3. นำข้อความที่เหลือมาแยกเป็นบรรทัดเพื่อแกะชื่อและที่อยู่
+            const lines = remainingText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            let detectedName = "";
             let detectedAddress = "";
-            const phoneRegex = /(0\d{8,9})/g;
 
             if (lines.length > 0) {
-                let firstLine = lines[0];
-                const phoneMatch = firstLine.match(phoneRegex);
-                
-                if (phoneMatch) {
-                    detectedPhone = phoneMatch[0];
-                    detectedName = firstLine.replace(detectedPhone, '').trim();
-                } else {
-                    detectedName = firstLine;
-                }
-
-                if (detectedName) {
-                    if (!detectedName.startsWith('คุณ')) {
-                        detectedName = 'คุณ' + detectedName;
-                    }
+                detectedName = lines[0]; // บรรทัดแรกเป็นชื่อ
+                if (detectedName && !detectedName.startsWith('คุณ')) {
+                    detectedName = 'คุณ' + detectedName;
                 }
 
                 if (lines.length > 1) {
-                    let startIndex = 1;
-                    if (!detectedPhone) {
-                        const line2Match = lines[1].match(phoneRegex);
-                        if (line2Match) {
-                            detectedPhone = line2Match[0];
-                            startIndex = 2;
-                        }
-                    }
-                    detectedAddress = lines.slice(startIndex).join(' ');
+                    detectedAddress = lines.slice(1).join(' '); // บรรทัดที่เหลือคือที่อยู่
                 }
             }
 
-            if (detectedName) document.getElementById('customerName').value = detectedName;
-            if (detectedPhone) document.getElementById('customerPhone').value = detectedPhone;
-            if (detectedAddress) document.getElementById('customerAddress').value = detectedAddress;
+            // 4. ถ้าระบบเจอ รหัสไปรษณีย์ 5 หลัก ให้นำกลับมาต่อท้ายที่ช่องที่อยู่ให้สวยงาม
+            if (detectedZip) {
+                detectedAddress = detectedAddress ? `${detectedAddress} ${detectedZip}` : detectedZip;
+            }
+
+            // นำค่าไปแสดงผลบนฟอร์ม
+            document.getElementById('customerName').value = detectedName;
+            document.getElementById('customerPhone').value = detectedPhone ? detectedPhone : '-';
+            document.getElementById('customerAddress').value = detectedAddress;
             
-            alert('🪄 แยกช่องให้เรียบร้อยแล้วจ้า!');
+            alert('🪄 ระบบแยก เบอร์โทร 10 หลัก และ รหัสไปรษณีย์ 5 หลัก ลงช่องเรียบร้อยจ้า!');
         }
 
         // --- 3. ระบบบีบอัดรูปภาพ ---
@@ -415,7 +421,6 @@
                         `;
 
                         if (currentStatus === 'ส่งเลย') {
-                            // ปรับแต่งการแจ้งเตือนประเภทการส่งให้ชัดเจนตามบรีฟใหม่
                             const note = isAutoMoved 
                                 ? `<span class="text-rose-700 text-xs font-bold bg-rose-100 px-2.5 py-1 rounded-full shadow-xs border border-rose-200 block text-center">🚨 ฝากครบ 14 วันแล้ว (ย้ายอัตโนมัติ)</span>` 
                                 : `<span class="text-emerald-700 text-xs font-bold bg-emerald-100 px-2.5 py-1 rounded-full block text-center">🚀 ส่งทันที</span>`;
