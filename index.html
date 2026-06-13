@@ -197,7 +197,9 @@
 
     <div id="addressModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
         <div class="bg-white rounded-3xl p-6 max-w-md w-full border-2 border-pink-200 shadow-xl relative animate-fade-in">
-            <h3 class="text-lg font-bold text-pink-600 mb-3 flex items-center gap-1">📋 ข้อมูลที่อยู่ผู้รับ</h3>
+            <h3 class="text-lg font-bold text-pink-600 mb-3 flex items-center gap-1">
+                📋 ข้อมูลที่อยู่ผู้รับ <span id="modalLineTitle" class="text-purple-600 ml-1"></span>
+            </h3>
             
             <div id="modalTextContainer" class="bg-pink-50/50 p-4 rounded-2xl border border-pink-100 text-gray-800 text-base leading-relaxed mb-4 select-all">
             </div>
@@ -571,9 +573,10 @@
 
                         const imagesJsonStr = data.imagesList ? encodeURIComponent(JSON.stringify(data.imagesList)) : '';
 
+                        // เพิ่มการส่ง `cleanLine` เข้าไปใน viewAddress ตรงนี้ครับ
                         const actionButtons = `
                             <button onclick="startEditOrder('${id}', '${cleanLine}', '${data.name}', '${cleanPhone}', '${data.date}', '${cleanAddress}', ${data.isComplete || false}, '${data.status}', '${imagesJsonStr}')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">✏️ แก้ไข</button>
-                            <button onclick="viewAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">👁️ ดูที่อยู่</button>
+                            <button onclick="viewAddress('${data.name}', '${cleanPhone}', '${cleanAddress}', '${cleanLine}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">👁️ ดูที่อยู่</button>
                             <button onclick="printAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">🖨️ ปริ้นต์</button>
                         `;
 
@@ -636,8 +639,13 @@
             }
         }
 
-        function viewAddress(name, phone, address) {
+        // เพิ่มตัวแปร lineID เข้ามาในฟังก์ชันเพื่อเอาไปใส่ในหัวข้อหน้าต่าง
+        function viewAddress(name, phone, address, lineID) {
             currentCopyText = `ผู้รับ: ${name}   เบอร์โทร: ${phone}   ที่อยู่: ${address}`;
+            
+            // แสดงชื่อไลน์ในส่วนหัวข้อ (ถ้าไม่มีจะแสดงเป็นแดชให้)
+            document.getElementById('modalLineTitle').innerText = `(${lineID ? lineID : '-'})`;
+            
             const modalTextContainer = document.getElementById('modalTextContainer');
             modalTextContainer.innerHTML = `
                 <strong>ผู้รับ:</strong> ${name} <br>
