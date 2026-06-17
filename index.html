@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกและจัดการส่งของ (Cute V3.3)</title>
+    <title>ระบบบันทึกและจัดการส่งของ (Cute V3.4)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,7 +115,7 @@
                         <span class="text-sm font-semibold text-purple-700">📦 เช็กของครบแล้วน้า</span>
                     </label>
                     
-                    <div class="flex items-center space-x-4 border-l pl-6 border-purple-200">
+                    <div class="flex flex-wrap items-center gap-4 border-l pl-6 border-purple-200">
                         <span class="text-sm font-semibold text-purple-600">สถานะ:</span>
                         <label class="flex items-center space-x-1.5 cursor-pointer">
                             <input type="radio" name="shippingStatus" value="ส่งเลย" checked class="w-4 h-4 text-pink-500 focus:ring-pink-400">
@@ -124,6 +124,10 @@
                         <label class="flex items-center space-x-1.5 cursor-pointer">
                             <input type="radio" name="shippingStatus" value="ฝากของ" class="w-4 h-4 text-purple-500 focus:ring-purple-400">
                             <span class="text-sm font-medium text-gray-700">📥 ฝากไว้ก่อน</span>
+                        </label>
+                        <label class="flex items-center space-x-1.5 cursor-pointer">
+                            <input type="radio" name="shippingStatus" value="ส่งนอกรอบ" class="w-4 h-4 text-amber-500 focus:ring-amber-400">
+                            <span class="text-sm font-medium text-gray-700">📦 ส่งนอกรอบ</span>
                         </label>
                     </div>
                 </div>
@@ -188,6 +192,31 @@
                             </tr>
                         </thead>
                         <tbody id="onHoldTable" class="divide-y divide-gray-100 text-sm">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-md border border-amber-100 overflow-hidden">
+                <div class="bg-amber-100/70 px-6 py-4 border-b border-amber-200 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-amber-800 flex items-center gap-2">📦 รายการส่งนอกรอบ</h2>
+                    <span id="customCount" class="bg-amber-200 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">0 คน</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-amber-50/50 text-amber-900 text-xs uppercase font-bold border-b border-amber-100">
+                                <th class="p-4">รูปภาพ</th>
+                                <th class="p-4">ชื่อไลน์</th>
+                                <th class="p-4">ชื่อผู้รับ</th>
+                                <th class="p-4">เบอร์โทร</th>
+                                <th class="p-4">ที่อยู่</th>
+                                <th class="p-4 text-center">เช็กของ</th>
+                                <th class="p-4 text-center">ประเภทการส่ง</th>
+                                <th class="p-4 text-right">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customShipTable" class="divide-y divide-gray-100 text-sm">
                         </tbody>
                     </table>
                 </div>
@@ -524,12 +553,15 @@
             db.ref('orders').on('value', (snapshot) => {
                 const readyTable = document.getElementById('readyToShipTable');
                 const holdTable = document.getElementById('onHoldTable');
+                const customTable = document.getElementById('customShipTable'); // ดึงตารางส่งนอกรอบ
                 
                 readyTable.innerHTML = '';
                 holdTable.innerHTML = '';
+                customTable.innerHTML = ''; // เคลียร์ตารางส่งนอกรอบ
 
                 let readyCount = 0;
                 let holdCount = 0;
+                let customCount = 0; // ตัวนับจำนวนส่งนอกรอบ
 
                 const isEditMode = document.getElementById('editModeToggle').checked;
 
@@ -573,11 +605,10 @@
 
                         const imagesJsonStr = data.imagesList ? encodeURIComponent(JSON.stringify(data.imagesList)) : '';
 
-                        // เพิ่มการส่ง `cleanLine` เข้าไปใน viewAddress ตรงนี้ครับ
                         const actionButtons = `
-                            <button onclick="startEditOrder('${id}', '${cleanLine}', '${data.name}', '${cleanPhone}', '${data.date}', '${cleanAddress}', ${data.isComplete || false}, '${data.status}', '${imagesJsonStr}')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">✏️ แก้ไข</button>
-                            <button onclick="viewAddress('${data.name}', '${cleanPhone}', '${cleanAddress}', '${cleanLine}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">👁️ ดูที่อยู่</button>
-                            <button onclick="printAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">🖨️ ปริ้นต์</button>
+                            <button type="button" onclick="startEditOrder('${id}', '${cleanLine}', '${data.name}', '${cleanPhone}', '${data.date}', '${cleanAddress}', ${data.isComplete || false}, '${data.status}', '${imagesJsonStr}')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">✏️ แก้ไข</button>
+                            <button type="button" onclick="viewAddress('${data.name}', '${cleanPhone}', '${cleanAddress}', '${cleanLine}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">👁️ ดูที่อยู่</button>
+                            <button type="button" onclick="printAddress('${data.name}', '${cleanPhone}', '${cleanAddress}')" class="bg-pink-100 hover:bg-pink-200 text-pink-700 text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer">🖨️ ปริ้นต์</button>
                         `;
 
                         if (currentStatus === 'ส่งเลย') {
@@ -600,6 +631,22 @@
                                 </td>
                             `;
                             readyTable.appendChild(row);
+                        } else if (currentStatus === 'ส่งนอกรอบ') {
+                            customCount++;
+                            row.innerHTML = `
+                                <td class="p-4">${imagesHTML}</td>
+                                <td class="p-4 font-semibold text-pink-600 whitespace-nowrap">🟢 ${cleanLine}</td>
+                                <td class="p-4 font-bold text-gray-900">${data.name}</td>
+                                <td class="p-4 text-gray-700 font-medium">${cleanPhone}</td>
+                                <td class="p-4 text-gray-600 max-w-xs truncate">${data.address}</td>
+                                <td class="p-4 text-center">${checkIcon}</td>
+                                <td class="p-4"><span class="text-amber-700 text-xs font-bold bg-amber-100 px-2.5 py-1 rounded-full block text-center">📦 ส่งนอกรอบ</span></td>
+                                <td class="p-4 text-right whitespace-nowrap space-x-1">
+                                    ${actionButtons}
+                                    ${deleteBtn}
+                                </td>
+                            `;
+                            customTable.appendChild(row);
                         } else {
                             holdCount++;
                             row.innerHTML = `
@@ -618,13 +665,22 @@
                             holdTable.appendChild(row);
                         }
                     });
-                } else {
+                }
+                
+                // ตรวจสอบข้อมูลว่างสำหรับตารางส่งนอกรอบ
+                if (readyTable.innerHTML === '') {
                     readyTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-white">ไม่มีข้อมูลรายการส่งของจ้า 🐻</td></tr>`;
+                }
+                if (holdTable.innerHTML === '') {
                     holdTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-white">ไม่มีข้อมูลรายการฝากของจ้า 🍯</td></tr>`;
+                }
+                if (customTable.innerHTML === '') {
+                    customTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-white">ไม่มีข้อมูลรายการส่งนอกรอบจ้า 💌</td></tr>`;
                 }
 
                 document.getElementById('readyCount').innerText = readyCount + ' คน';
                 document.getElementById('holdCount').innerText = holdCount + ' คน';
+                document.getElementById('customCount').innerText = customCount + ' คน'; // อัปเดตตัวนับจำนวนส่งนอกรอบ
             });
         }
 
@@ -639,11 +695,9 @@
             }
         }
 
-        // เพิ่มตัวแปร lineID เข้ามาในฟังก์ชันเพื่อเอาไปใส่ในหัวข้อหน้าต่าง
         function viewAddress(name, phone, address, lineID) {
             currentCopyText = `ผู้รับ: ${name}   เบอร์โทร: ${phone}   ที่อยู่: ${address}`;
             
-            // แสดงชื่อไลน์ในส่วนหัวข้อ (ถ้าไม่มีจะแสดงเป็นแดชให้)
             document.getElementById('modalLineTitle').innerText = `(${lineID ? lineID : '-'})`;
             
             const modalTextContainer = document.getElementById('modalTextContainer');
