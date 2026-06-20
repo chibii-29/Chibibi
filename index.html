@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกและจัดการส่งของ (Cute V3.4)</title>
+    <title>ระบบบันทึกและจัดการส่งของ (Cute V3.5)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -553,15 +553,15 @@
             db.ref('orders').on('value', (snapshot) => {
                 const readyTable = document.getElementById('readyToShipTable');
                 const holdTable = document.getElementById('onHoldTable');
-                const customTable = document.getElementById('customShipTable'); // ดึงตารางส่งนอกรอบ
+                const customTable = document.getElementById('customShipTable'); 
                 
                 readyTable.innerHTML = '';
                 holdTable.innerHTML = '';
-                customTable.innerHTML = ''; // เคลียร์ตารางส่งนอกรอบ
+                customTable.innerHTML = ''; 
 
                 let readyCount = 0;
                 let holdCount = 0;
-                let customCount = 0; // ตัวนับจำนวนส่งนอกรอบ
+                let customCount = 0; 
 
                 const isEditMode = document.getElementById('editModeToggle').checked;
 
@@ -592,12 +592,7 @@
                             ? `<button onclick="deleteOrder('${id}')" class="bg-rose-400 hover:bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer transition shadow-xs active:scale-95">ลบ</button>` 
                             : '';
 
-                        let currentStatus = data.status;
-                        let isAutoMoved = false;
-                        if (data.status === 'ฝากของ' && daysCount >= 14) {
-                            currentStatus = 'ส่งเลย';
-                            isAutoMoved = true;
-                        }
+                        const currentStatus = data.status; // เอาเงื่อนไขเปลี่ยนเป็นส่งเลยตอน 14 วันออกแล้ว
 
                         const cleanLine = data.lineID || '-';
                         const cleanPhone = data.phone || '-';
@@ -613,9 +608,7 @@
 
                         if (currentStatus === 'ส่งเลย') {
                             readyCount++;
-                            const note = isAutoMoved 
-                                ? `<span class="text-rose-700 text-xs font-bold bg-rose-100 px-2.5 py-1 rounded-full shadow-xs border border-rose-200 block text-center">🚨 ฝากครบ 14 วันแล้ว (ย้ายอัตโนมัติ)</span>` 
-                                : `<span class="text-emerald-700 text-xs font-bold bg-emerald-100 px-2.5 py-1 rounded-full block text-center">🚀 ส่งทันที</span>`;
+                            const note = `<span class="text-emerald-700 text-xs font-bold bg-emerald-100 px-2.5 py-1 rounded-full block text-center">🚀 ส่งทันที</span>`;
                                 
                             row.innerHTML = `
                                 <td class="p-4">${imagesHTML}</td>
@@ -648,6 +641,7 @@
                             `;
                             customTable.appendChild(row);
                         } else {
+                            // อยู่ในกลุ่ม "ฝากของ" เสมอ ไม่ว่าวันจะผ่านไปกี่วันก็ตาม
                             holdCount++;
                             row.innerHTML = `
                                 <td class="p-4">${imagesHTML}</td>
@@ -667,7 +661,6 @@
                     });
                 }
                 
-                // ตรวจสอบข้อมูลว่างสำหรับตารางส่งนอกรอบ
                 if (readyTable.innerHTML === '') {
                     readyTable.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 bg-white">ไม่มีข้อมูลรายการส่งของจ้า 🐻</td></tr>`;
                 }
@@ -680,7 +673,7 @@
 
                 document.getElementById('readyCount').innerText = readyCount + ' คน';
                 document.getElementById('holdCount').innerText = holdCount + ' คน';
-                document.getElementById('customCount').innerText = customCount + ' คน'; // อัปเดตตัวนับจำนวนส่งนอกรอบ
+                document.getElementById('customCount').innerText = customCount + ' คน'; 
             });
         }
 
